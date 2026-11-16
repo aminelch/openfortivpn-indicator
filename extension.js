@@ -8,10 +8,11 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
 const REFRESH_SECONDS = 3;
 const INTERFACE_PATH = '/sys/class/net/ppp0';
-const PgrepPath = '/usr/bin/pgrep';
 
 export default class OpenFortiVPNIndicator extends Extension {
     enable() {
+        this._cancellable = new Gio.Cancellable();
+
         this._button = new PanelMenu.Button(0.0, 'OpenFortiVPN Indicator', true);
         this._icon = new St.Icon({
             icon_name: 'network-vpn-symbolic',
@@ -31,37 +32,44 @@ export default class OpenFortiVPNIndicator extends Extension {
         );
     }
 
-    _isProcessRunning() {
-        try {
-            const [, , , waitStatus] = GLib.spawn_sync(
-                null,
-                [PgrepPath, '-x', 'openfortivpn'],
-                null,
-                GLib.SpawnFlags.SEARCH_PATH,
-                null
-            );
-            return waitStatus === 0;
-        } catch (error) {
-            console.error(`OpenFortiVPN Indicator: unable to check process: ${error}`);
-            return false;
-        }
+    _checkProcessAsync() {
+        return new Promise(resolve => {
+            try {
+                const proc = new Gio.Subprocess({
+                    argv: ['pgrep', '-x', 'openfortivpn'],
+                    flags: Gio.SubprocessFlags.NONE,
+                });
+                proc.init(this._cancellable);
+                proc.wait_check_async(this._cancellable, (source, res) => {
+                    try {
+                        resolve(source.wait_check_finish(res));
+                    } catch {
+                        resolve(false);
+                    }
+                });
+            } catch {
+                resolve(false);
+            }
+        });
     }
 
     _hasTunnelInterface() {
         return Gio.File.new_for_path(INTERFACE_PATH).query_exists(null);
     }
 
-    _update() {
-        const connected = this._isProcessRunning() && this._hasTunnelInterface();
+    async _update() {
+        const processRunning = await this._checkProcessAsync();
+        const tunnelActive = this._hasTunnelInterface();
+        const connected = processRunning && tunnelActive;
+
+        if (!this._icon)
+            return;
 
         this._icon.set_style(
             connected
                 ? 'color: #2ec27e;'
                 : 'color: #e1151d;'
         );
-        this._icon.icon_name = connected
-            ? 'network-vpn-symbolic'
-            : 'network-vpn-symbolic';
     }
 
     disable() {
@@ -70,10 +78,19 @@ export default class OpenFortiVPNIndicator extends Extension {
             this._timeoutId = null;
         }
 
+        if (this._cancellable) {
+            this._cancellable.cancel();
+            this._cancellable = null;
+        }
+
+        if (this._icon) {
+            this._icon.destroy();
+            this._icon = null;
+        }
+
         if (this._button) {
             this._button.destroy();
             this._button = null;
-            this._icon = null;
         }
     }
 }

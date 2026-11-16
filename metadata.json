@@ -8,9 +8,6 @@
   "url": "https://github.com/aminelch/openfortivpn-indicator",
   "version": 1,
   "version-name": "1.0.0",
-  "session-modes": [
-    "user"
-  ],
   "donations": {
     "github": "aminelch",
     "custom": [

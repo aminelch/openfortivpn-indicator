@@ -1,0 +1,23 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# Editor / IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build and packaging artifacts
+*.zip
+build/
+dist/
+
+# Local maintenance scripts
+install.sh
+
+# Logs and runtime data
+*.log

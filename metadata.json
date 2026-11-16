@@ -1,0 +1,20 @@
+{
+  "uuid": "openfortivpn-indicator@aminelch.github.io",
+  "name": "OpenFortiVPN Status Indicator",
+  "description": "Monitor OpenFortiVPN connection status directly from the GNOME Shell top panel.",
+  "shell-version": [
+    "50"
+  ],
+  "url": "https://github.com/aminelch/openfortivpn-indicator",
+  "version": 1,
+  "version-name": "1.0.0",
+  "session-modes": [
+    "user"
+  ],
+  "donations": {
+    "github": "aminelch",
+    "custom": [
+      "https://aminelch.ovh"
+    ]
+  }
+}
